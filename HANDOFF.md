@@ -112,7 +112,10 @@ Android 第二片完成（2026-11-10）：倚天41 輸入法可在模擬器上�
 - 本機分支 `private-history` 是舊歷史備份，含裝置序號，**永遠不要 push**
 - LICENSE 只放 MIT 全文，第三方授權移到 THIRD_PARTY_NOTICES.md（GitHub 才認得出 MIT）
 
-上架路線剩下：隱私權說明頁、圖示／截圖／商店文字、Android 正式簽署金鑰、送審（iOS TestFlight→App Store；Android 內部測試→正式）。
+隱私權政策（2026-11-10）：https://goingli0324.github.io/eten41-ime/privacy.html（GitHub Pages，main 的 /docs；原始檔 docs/privacy.md）。支援網址可填 repo 或 issues 頁。
+- 內容依程式實際行為寫；之後若加網路、完整取用、分析工具，要同步改這頁
+
+上架路線剩下：圖示／截圖／商店文字、Android 正式簽署金鑰、送審（iOS TestFlight→App Store；Android 內部測試→正式）。
 
 還沒做：長按、大寫鎖定、Android。
 下一片待使用者決定（建議：裝到使用者的 iPhone 實際用）。
