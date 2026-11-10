@@ -120,6 +120,14 @@ Android 上傳金鑰（2026-11-11）：`~/keystores/eten41-upload.jks`（alias e
 - 上 Play Console 時用 Play App Signing（Google 保管正式簽章金鑰，我們只保管上傳金鑰；上傳金鑰遺失可申請重設）
 - **金鑰檔與密碼要另外備份**（使用者自己的密碼管理器），不要放進任何 repo
 
+iOS TestFlight（2026-11-11）：App Store Connect App ID 6833066181；1.0 (1) 已上傳、處理完成（準備提交）
+- 封存＋上傳：`xcodebuild archive ... -configuration Release -destination 'generic/platform=iOS' -allowProvisioningUpdates`，再 `xcodebuild -exportArchive`（ExportOptions：method app-store-connect、destination upload、teamID、automatic）
+- 坑：之前只用萬用描述檔，套件 ID 沒正式註冊，ASC 建 App 時下拉選單是空的 → 先 exportArchive（destination export）讓 Xcode 自動註冊 App 與鍵盤 ID
+- 坑：支援 iPad 必須宣告 UISupportedInterfaceOrientations，否則上傳被退（Invalid bundle）
+- 已加：兩個 PrivacyInfo.xcprivacy（File timestamp C617.1，libchewing 的 stat 系列）、ITSAppUsesNonExemptEncryption=NO、版本 1.0
+- 下次上傳要把 CURRENT_PROJECT_VERSION 加 1
+- 正式送審前：ASC 要求先填歐盟「貿易商狀態」（DSA）
+
 上架路線剩下：圖示／截圖／商店文字、Android 正式簽署金鑰、送審（iOS TestFlight→App Store；Android 內部測試→正式）。
 
 還沒做：長按、大寫鎖定、Android。
