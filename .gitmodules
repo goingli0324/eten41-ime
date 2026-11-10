@@ -1,0 +1,3 @@
+[submodule "vendor/libchewing"]
+	path = vendor/libchewing
+	url = https://codeberg.org/chewing/libchewing.git
