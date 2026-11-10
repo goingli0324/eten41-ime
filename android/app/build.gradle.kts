@@ -1,5 +1,17 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
+}
+
+// 上架用的 upload key 不放 repo（這是公開 repo）。預設讀 ~/keystores/eten41-keystore.properties，
+// 也可用環境變數 ETEN41_KEYSTORE_PROPERTIES 指到別的檔；找不到就照常建置，只是 release 不簽章。
+val keystorePropertiesFile = file(
+    System.getenv("ETEN41_KEYSTORE_PROPERTIES")
+        ?: "${System.getProperty("user.home")}/keystores/eten41-keystore.properties",
+)
+val keystoreProperties = Properties().apply {
+    if (keystorePropertiesFile.exists()) keystorePropertiesFile.inputStream().use { load(it) }
 }
 
 android {
@@ -16,6 +28,23 @@ android {
         ndk {
             // 目前只編 arm64：實機與 Apple Silicon 上的模擬器都是 arm64
             abiFilters += "arm64-v8a"
+        }
+    }
+
+    signingConfigs {
+        if (keystorePropertiesFile.exists()) {
+            create("release") {
+                storeFile = file(keystoreProperties.getProperty("storeFile"))
+                storePassword = keystoreProperties.getProperty("storePassword")
+                keyAlias = keystoreProperties.getProperty("keyAlias")
+                keyPassword = keystoreProperties.getProperty("keyPassword")
+            }
+        }
+    }
+
+    buildTypes {
+        getByName("release") {
+            signingConfig = signingConfigs.findByName("release")
         }
     }
 

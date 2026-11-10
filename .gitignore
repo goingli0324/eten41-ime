@@ -2,3 +2,9 @@ build/
 DerivedData/
 *.xcuserstate
 xcuserdata/
+
+# 簽章金鑰一律放 repo 外（~/keystores/）；以防萬一也擋掉
+*.jks
+*.keystore
+keystore.properties
+*-keystore.properties

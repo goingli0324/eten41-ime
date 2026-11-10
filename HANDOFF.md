@@ -115,6 +115,11 @@ Android 第二片完成（2026-11-10）：倚天41 輸入法可在模擬器上�
 隱私權政策（2026-11-10）：https://goingli0324.github.io/eten41-ime/privacy.html（GitHub Pages，main 的 /docs；原始檔 docs/privacy.md）。支援網址可填 repo 或 issues 頁。
 - 內容依程式實際行為寫；之後若加網路、完整取用、分析工具，要同步改這頁
 
+Android 上傳金鑰（2026-11-11）：`~/keystores/eten41-upload.jks`（alias eten41-upload，CN=MUZI-GOING，RSA 2048，有效至 2056），密碼在 `~/keystores/eten41-keystore.properties`（600 權限，repo 外）。`android/app/build.gradle.kts` 預設讀這個檔，或用環境變數 ETEN41_KEYSTORE_PROPERTIES 指定；檔案不在時 release 不簽章。
+- 打包：`cd android && ./gradlew :app:bundleRelease` → `app/build/outputs/bundle/release/app-release.aab`（jarsigner 驗過 jar verified）
+- 上 Play Console 時用 Play App Signing（Google 保管正式簽章金鑰，我們只保管上傳金鑰；上傳金鑰遺失可申請重設）
+- **金鑰檔與密碼要另外備份**（使用者自己的密碼管理器），不要放進任何 repo
+
 上架路線剩下：圖示／截圖／商店文字、Android 正式簽署金鑰、送審（iOS TestFlight→App Store；Android 內部測試→正式）。
 
 還沒做：長按、大寫鎖定、Android。
