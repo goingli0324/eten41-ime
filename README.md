@@ -37,5 +37,5 @@ cd android && ./gradlew connectedDebugAndroidTest   # 需要開著模擬器或�
 
 ## 授權
 
-- 本專案自己的程式碼：[MIT](LICENSE)
+- 本專案自己的程式碼：[MIT](LICENSE)；第三方元件見 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)
 - libchewing、libchewing-data：GNU LGPL 2.1 或更新版本。App 以靜態連結使用 libchewing、未修改其原始碼；本 repo 即是替換 libchewing 後重新建置所需的完整原始碼。App 內「授權與原始碼」頁附授權全文與作者名單。

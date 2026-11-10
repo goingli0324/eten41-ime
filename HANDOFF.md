@@ -107,7 +107,12 @@ Android 第二片完成（2026-11-10）：倚天41 輸入法可在模擬器上�
 - 測試：iOS 26.5（iPhone 17 Pro 模擬器）27 項全綠；Android 模擬器 17 項全綠
 - 使用者的實機上還是舊 ID（…smoke）版本；換新 ID 安裝會變成另一個 App，舊的要不要刪先問使用者
 
-上架路線剩下：開源 repo、隱私權說明頁、圖示／截圖／商店文字、Android 正式簽署金鑰、送審（iOS TestFlight→App Store；Android 內部測試→正式）。
+開源 repo 已公開（2026-11-10）：https://github.com/goingli0324/eten41-ime
+- 公開的歷史從乾淨的單一 commit 開始（作者用 noreply 信箱，repo 層 git config 已設好）
+- 本機分支 `private-history` 是舊歷史備份，含裝置序號，**永遠不要 push**
+- LICENSE 只放 MIT 全文，第三方授權移到 THIRD_PARTY_NOTICES.md（GitHub 才認得出 MIT）
+
+上架路線剩下：隱私權說明頁、圖示／截圖／商店文字、Android 正式簽署金鑰、送審（iOS TestFlight→App Store；Android 內部測試→正式）。
 
 還沒做：長按、大寫鎖定、Android。
 下一片待使用者決定（建議：裝到使用者的 iPhone 實際用）。
