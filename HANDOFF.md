@@ -127,6 +127,7 @@ iOS TestFlight（2026-11-11）：App Store Connect App ID 6833066181；1.0 (1) �
 - 已加：兩個 PrivacyInfo.xcprivacy（File timestamp C617.1，libchewing 的 stat 系列）、ITSAppUsesNonExemptEncryption=NO、版本 1.0
 - 內部測試群組「自己測試」（自動分發開啟）；2026-11-11 使用者從 TestFlight 安裝 1.0 (1) 實機試用正常
 - 外部測試群組「主管測試」（1 人，名單只在 ASC）：1.0 (1) 2026-11-11 送 Beta 審查，狀態「等待審查」；TestFlight 測試資訊已填（審查聯絡人同紫垣）
+- 2026-11-12：建置 1 Beta 審查通過；建置 2 加進「主管測試」後直接變「正在測試」，沒有再排審查（同一版本號的後續建置）。同一版本一次只能有一個建置在 Beta 審查，前一個沒審完加不了下一個
 - 下次上傳要把 CURRENT_PROJECT_VERSION 加 1（目前 2）
 - 正式送審前：ASC 要求先填歐盟「貿易商狀態」（DSA）
 
