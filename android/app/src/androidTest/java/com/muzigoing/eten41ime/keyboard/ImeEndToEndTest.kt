@@ -28,6 +28,7 @@ class ImeEndToEndTest {
     fun enableEten41() {
         device.executeShellCommand("ime enable $IME_ID")
         device.executeShellCommand("ime set $IME_ID")
+        waitUntilEten41IsDefault(device, IME_ID)
     }
 
     @After
@@ -116,6 +117,10 @@ class ImeEndToEndTest {
     private fun tap(description: String) {
         repeat(3) {
             val target = device.wait(Until.findObject(By.desc(description)), TIMEOUT)
+            if (target == null) {
+                device.executeShellCommand("screencap -p /data/local/tmp/eten41-e2e-fail.png")
+                device.executeShellCommand("uiautomator dump /data/local/tmp/eten41-e2e-fail.xml")
+            }
             assertNotNull("找不到「$description」", target)
             try {
                 target.click()

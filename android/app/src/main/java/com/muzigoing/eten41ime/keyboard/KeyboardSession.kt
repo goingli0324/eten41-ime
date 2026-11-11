@@ -47,6 +47,24 @@ class KeyboardSession(private val engine: ChewingEngine, private var output: Key
         flush()
     }
 
+    /** 組字區有沒有字（實體鍵盤：沒字時空白／退格／Enter 交給系統） */
+    val hasComposition: Boolean get() = engine.hasComposition
+
+    /**
+     * 實體鍵盤的鍵（只在中文模式呼叫；英文模式由輸入法服務直接交給系統）。
+     * Shift＋字母打大寫英文（同微軟注音），Shift＋其他鍵打全形標點。
+     */
+    fun tapHardwareKey(key: Eten41Key, shifted: Boolean) {
+        if (shifted && key.shiftedAscii == null) {
+            commitComposition()
+            output?.insertText(key.ascii.uppercase())
+            notifyChanged()
+            return
+        }
+        isShifted = shifted
+        tap(key)
+    }
+
     fun toggleShift() {
         isShifted = !isShifted
         notifyChanged()
@@ -121,11 +139,7 @@ class KeyboardSession(private val engine: ChewingEngine, private var output: Key
 
     /** 中英切換；切到英文前先把組字區上字 */
     fun toggleEnglishMode() {
-        if (!isEnglishMode && engine.hasComposition) {
-            releaseFocus()
-            engine.pressEnter()
-            flush()
-        }
+        if (!isEnglishMode) commitComposition()
         isEnglishMode = !isEnglishMode
         notifyChanged()
     }
@@ -137,6 +151,13 @@ class KeyboardSession(private val engine: ChewingEngine, private var output: Key
         isShifted = false
         isShowingSymbols = false
         refresh()
+    }
+
+    private fun commitComposition() {
+        if (!engine.hasComposition) return
+        releaseFocus()
+        engine.pressEnter()
+        flush()
     }
 
     private fun releaseFocus() {

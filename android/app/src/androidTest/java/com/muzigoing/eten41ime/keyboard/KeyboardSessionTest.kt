@@ -49,6 +49,43 @@ class KeyboardSessionTest {
     private fun type(keys: String) = keys.forEach { if (it == ' ') session.tapSpace() else session.tap(key(it)) }
 
     @Test
+    fun hardwareShiftLetterTypesUppercaseAfterCommitting() {
+        type("dx- ")
+        session.tapHardwareKey(key('o'), shifted = true)
+        assertEquals("東O", output.text)
+        assertEquals("", session.composingText)
+    }
+
+    @Test
+    fun hardwareKeyMapperFollowsUsKeyPositions() {
+        val d = HardwareKeyMapper.map(android.view.KeyEvent.KEYCODE_D, 0)
+        assertEquals(HardwareKeyAction.Key(key('d'), shifted = false), d)
+        val comma = HardwareKeyMapper.map(android.view.KeyEvent.KEYCODE_COMMA, android.view.KeyEvent.META_SHIFT_ON)
+        assertEquals(HardwareKeyAction.Key(key(','), shifted = true), comma)
+        // Ctrl＋C 這類快捷鍵、方向鍵交給系統
+        assertEquals(HardwareKeyAction.PassThrough, HardwareKeyMapper.map(android.view.KeyEvent.KEYCODE_C, android.view.KeyEvent.META_CTRL_ON))
+        assertEquals(HardwareKeyAction.PassThrough, HardwareKeyMapper.map(android.view.KeyEvent.KEYCODE_DPAD_LEFT, 0))
+    }
+
+    @Test
+    fun candidatesOnlyViewHasNoKeys() {
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        var descriptions = emptyList<String>()
+        instrumentation.runOnMainSync {
+            val view = KeyboardView(instrumentation.targetContext, session, candidatesOnly = true)
+            type("dx- ")
+            descriptions = allDescriptions(view)
+        }
+        assertTrue("候選列要有組字區", "組字區 東" in descriptions)
+        assertTrue("不該有螢幕鍵：$descriptions", descriptions.none { it == "D" || it == "換行" || it == "刪除" })
+    }
+
+    private fun allDescriptions(view: android.view.View): List<String> = buildList {
+        view.contentDescription?.let { add(it.toString()) }
+        if (view is android.view.ViewGroup) for (i in 0 until view.childCount) addAll(allDescriptions(view.getChildAt(i)))
+    }
+
+    @Test
     fun layoutKeycapsMatchEngine() {
         val keys = Eten41Layout.allKeys.filter { it.symbol != null && it.ascii !in "1234" }
         assertEquals(37, keys.size)

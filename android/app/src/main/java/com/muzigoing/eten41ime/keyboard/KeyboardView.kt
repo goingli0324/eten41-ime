@@ -23,6 +23,8 @@ class KeyboardView(
     private val session: KeyboardSession,
     private val showsGlobeKey: Boolean = false,
     private val onGlobe: () -> Unit = {},
+    /** 接了實體鍵盤：只顯示候選列（組字區＋候選字），不顯示螢幕鍵盤 */
+    private val candidatesOnly: Boolean = false,
 ) : LinearLayout(context) {
 
     private val palette = Palette.forContext(context)
@@ -45,8 +47,10 @@ class KeyboardView(
             },
             LayoutParams(LayoutParams.MATCH_PARENT, dp(CANDIDATE_BAR_DP)),
         )
-        addView(keyArea, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT))
-        addView(bottomRow, LayoutParams(LayoutParams.MATCH_PARENT, dp(ROW_DP)).withMargins())
+        if (!candidatesOnly) {
+            addView(keyArea, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT))
+            addView(bottomRow, LayoutParams(LayoutParams.MATCH_PARENT, dp(ROW_DP)).withMargins())
+        }
         session.onChange = { render() }
         render()
         // Android 15 起輸入法視窗延伸到螢幕最底，系統把「收鍵盤／切換輸入法」按鈕畫在上面；
@@ -65,6 +69,7 @@ class KeyboardView(
 
     private fun render() {
         renderCandidateStrip()
+        if (candidatesOnly) return
         keyArea.removeAllViews()
         if (session.isShowingSymbols) renderSymbolPanel() else renderKeyRows()
         renderBottomRow()

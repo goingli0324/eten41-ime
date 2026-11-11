@@ -134,7 +134,10 @@ Android 內部測試（2026-11-11）：Play Console 已建 App（套件 app.muzi
 - 版本 versionName 改 1.0；Play 只警告沒附去模糊化檔（沒開 R8，可忽略）
 - 2026-11-11 使用者在 Android 實機從 Play 內部測試安裝 1.0 試用正常
 - 坑：Play 內部測試不會寄邀請信，要把加入連結傳給測試人員；在 Play 商店 App 直接開連結、或裝置登入的帳號不在名單，會顯示「找不到項目」→ 用瀏覽器開、登入名單帳號按「接受邀請」
-- 下次上傳 versionCode 要加 1
+- 實體（藍牙）鍵盤支援（2026-11-11，Android 1.0 (2)）：HardwareKeyMapper 照美式鍵位轉倚天41；單按 Shift 切中英、Shift＋字母打大寫、Shift＋符號打全形；組字區沒字時空白／退格／Enter 交給系統；Ctrl／Alt／Meta 組合鍵交給系統；接實體鍵盤時只顯示候選列（模擬器 hw.keyboard=no，這個模式未實機驗）；選字只能點候選列（數字鍵是注音）
+- iOS 不支援實體鍵盤：第三方鍵盤收不到實體按鍵（開發者論壇回報，非官方文件），使用者確認 Apple 內建注音沒有倚天排列
+- 坑：測試 `ime set` 後系統不一定已切換，偶發叫出 Gboard → ImeTestSupport.waitUntilEten41IsDefault
+- 下次上傳 versionCode 要加 1（目前 2）
 
 上架路線剩下：圖示／截圖／商店文字、Android 正式簽署金鑰、送審（iOS TestFlight→App Store；Android 內部測試→正式）。
 
