@@ -99,7 +99,62 @@ class KeyboardSessionTest {
         assertEquals(HardwareKeyAction.Key(key(','), shifted = true), comma)
         // Ctrl＋C 這類快捷鍵、方向鍵交給系統
         assertEquals(HardwareKeyAction.PassThrough, HardwareKeyMapper.map(android.view.KeyEvent.KEYCODE_C, android.view.KeyEvent.META_CTRL_ON))
-        assertEquals(HardwareKeyAction.PassThrough, HardwareKeyMapper.map(android.view.KeyEvent.KEYCODE_DPAD_LEFT, 0))
+        assertEquals(HardwareKeyAction.Left, HardwareKeyMapper.map(android.view.KeyEvent.KEYCODE_DPAD_LEFT, 0))
+        assertEquals(HardwareKeyAction.Down, HardwareKeyMapper.map(android.view.KeyEvent.KEYCODE_DPAD_DOWN, 0))
+        assertEquals(HardwareKeyAction.PassThrough, HardwareKeyMapper.map(android.view.KeyEvent.KEYCODE_TAB, 0))
+    }
+
+    @Test
+    fun arrowsMoveFocusAcrossCompositionAndBackToEnd() {
+        type("dx- ce1")
+        session.moveFocus(-1)
+        assertEquals(1, session.focusedIndex)
+        session.moveFocus(-1)
+        assertEquals(0, session.focusedIndex)
+        session.moveFocus(-1)
+        assertEquals("最左邊再往左不動", 0, session.focusedIndex)
+        session.moveFocus(1)
+        session.moveFocus(1)
+        assertNull("移過最後一個字＝游標回到最後", session.focusedIndex)
+        type("dx- ")
+        assertEquals("東西東", session.composingText)
+    }
+
+    @Test
+    fun pickingWithArrowsReplacesFocusedCharacter() {
+        type("dx- ce1")
+        session.moveFocus(-1)
+        session.moveFocus(-1)
+        session.startPicking()
+        assertEquals(0, session.highlightedCandidateIndex)
+        val winter = session.candidates.indexOfFirst { it.text == "冬" }
+        assertTrue("候選裡要有「冬」", winter >= 0)
+        repeat(winter) { session.moveHighlight(1) }
+        session.confirmHighlighted()
+        assertEquals("冬西", session.composingText)
+        assertFalse(session.isPicking)
+        assertNull(session.focusedIndex)
+    }
+
+    @Test
+    fun pickingByNumberAndCancel() {
+        type("dx- ce1")
+        session.moveFocus(-1)
+        session.moveFocus(-1)
+        session.pickByNumber(2)
+        assertEquals("不在選字中，數字不選字", "東西", session.composingText)
+        session.startPicking()
+        session.cancelPicking()
+        assertFalse(session.isPicking)
+        assertEquals("東西", session.composingText)
+        session.startPicking()
+        val second = session.candidates[1].text
+        session.pickByNumber(2)
+        assertEquals(if (second.length >= 2) second else second + "西", session.composingText)
+        session.startPicking()
+        session.pickByNumber(9)
+        session.moveHighlight(-5)
+        assertEquals("反白不會移到範圍外", 0, session.highlightedCandidateIndex ?: 0)
     }
 
     @Test

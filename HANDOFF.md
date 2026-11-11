@@ -140,7 +140,8 @@ Android 內部測試（2026-11-11）：Play Console 已建 App（套件 app.muzi
 - 長按刪除與大寫鎖定（2026-11-11，iOS 1.0 (2)／Android 1.0 (3)）：刪除鍵按下即刪、按住 0.4 秒後每 0.1 秒連刪；⇧ 三段循環（單次→鎖定→解除），實體鍵盤不動螢幕 ⇧ 狀態
   - Android 坑：刪組字區會重畫整個鍵盤、刪除鍵被換掉，「放開」改由 KeyboardView.dispatchTouchEvent 判斷
   - 測試坑：上一個測試的 `ime reset` 可能比下一個測試的 `ime set` 晚生效，設定值看起來對、出來的卻是 Gboard → ensureEten41KeyboardShown；iOS UI 測試別比對特定字（鍵盤擴充會記住選過的字）
-- 下次上傳 versionCode 要加 1（目前 3）
+- 實體鍵盤方向鍵選字（2026-11-11，Android 1.0 (4)，比照微軟注音）：組字區有字時 ← → 移動選到的字、↓ 進入選字（前 9 個候選標數字）、選字中 ← →／↓ 移動反白、Enter／空白選定、1～9 直接選、Esc／↑ 離開；組字區沒字時方向鍵交給系統。只在模擬器用模擬按鍵驗過，真機藍牙鍵盤待主任回報
+- 下次上傳 versionCode 要加 1（目前 4）
 
 上架路線剩下：圖示／截圖／商店文字、Android 正式簽署金鑰、送審（iOS TestFlight→App Store；Android 內部測試→正式）。
 

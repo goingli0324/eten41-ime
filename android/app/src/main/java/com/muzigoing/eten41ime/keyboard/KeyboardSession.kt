@@ -19,6 +19,9 @@ class KeyboardSession(private val engine: ChewingEngine, private var output: Key
     /** 使用者點了組字區第幾個字（null＝游標在最後，候選是最後一個詞） */
     var focusedIndex: Int? = null; private set
     var candidates: List<ChewingCandidate> = emptyList(); private set
+    /** 實體鍵盤按 ↓ 進入選字後，反白的是第幾個候選（null＝不在選字中） */
+    var highlightedCandidateIndex: Int? = null; private set
+    val isPicking: Boolean get() = highlightedCandidateIndex != null
     var isEnglishMode = false; private set
     /** ⇧ 三段循環：按一下只作用在下一個鍵，再按一下鎖定，第三下解除 */
     enum class ShiftState { OFF, ONCE, LOCKED }
@@ -141,6 +144,56 @@ class KeyboardSession(private val engine: ChewingEngine, private var output: Key
         refresh()
     }
 
+    // ---- 實體鍵盤的方向鍵（比照微軟注音）----
+
+    /** ← →：在組字區的字之間移動；從最後往左是最後一個字，移過最後一個字就回到「游標在最後」 */
+    fun moveFocus(delta: Int) {
+        if (pendingBopomofo.isNotEmpty() || composingCharacters.isEmpty()) return
+        val last = composingCharacters.lastIndex
+        val target = (focusedIndex ?: (last + 1)) + delta
+        when {
+            target > last -> releaseFocus()
+            else -> target.coerceAtLeast(0).let {
+                engine.moveCursor(it)
+                focusedIndex = it
+            }
+        }
+        refresh()
+    }
+
+    /** ↓：進入選字，反白第一個候選 */
+    fun startPicking() {
+        if (candidates.isEmpty()) return
+        highlightedCandidateIndex = 0
+        notifyChanged()
+    }
+
+    /** 選字中的 ← →：移動反白的候選 */
+    fun moveHighlight(delta: Int) {
+        val current = highlightedCandidateIndex ?: return
+        highlightedCandidateIndex = (current + delta).coerceIn(candidates.indices)
+        notifyChanged()
+    }
+
+    /** 選字中的 Enter／空白：選定反白的候選 */
+    fun confirmHighlighted() {
+        val candidate = highlightedCandidateIndex?.let(candidates::getOrNull) ?: return
+        choose(candidate)
+    }
+
+    /** 選字中的數字鍵 1～9：直接選第幾個；沒有那麼多候選就不動 */
+    fun pickByNumber(number: Int) {
+        if (!isPicking) return
+        candidates.getOrNull(number - 1)?.let(::choose)
+    }
+
+    /** Esc／↑：離開選字，組字區不變 */
+    fun cancelPicking() {
+        if (!isPicking) return
+        highlightedCandidateIndex = null
+        notifyChanged()
+    }
+
     /** 選字後游標回到最後，接著打的字接在後面 */
     fun choose(candidate: ChewingCandidate) {
         engine.choose(candidate)
@@ -186,6 +239,8 @@ class KeyboardSession(private val engine: ChewingEngine, private var output: Key
         composingCharacters = engine.bufferCharacters
         pendingBopomofo = engine.pendingBopomofo
         focusedIndex?.let { if (it !in composingCharacters.indices) focusedIndex = null }
+        // 候選換了一批，原本反白的位置就沒意義了
+        highlightedCandidateIndex = null
         candidates = engine.candidates(
             if (focusedIndex == null) CandidateDirection.ENDING_AT_CURSOR else CandidateDirection.STARTING_AT_CURSOR,
         )

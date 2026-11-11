@@ -72,15 +72,48 @@ class Eten41InputMethodService : InputMethodService(), KeyboardTextOutput {
         }
         shiftTappedAlone = false
         if (current.isEnglishMode) return super.onKeyDown(keyCode, event)
-        val handled = when (val action = HardwareKeyMapper.map(keyCode, event.metaState)) {
-            is HardwareKeyAction.Key -> { current.tapHardwareKey(action.key, action.shifted); true }
-            HardwareKeyAction.Space -> current.hasComposition.also { if (it) current.tapSpace() }
-            HardwareKeyAction.Backspace -> current.hasComposition.also { if (it) current.tapBackspace() }
-            HardwareKeyAction.Enter -> current.hasComposition.also { if (it) current.tapReturn() }
-            HardwareKeyAction.PassThrough -> false
-        }
+        val action = HardwareKeyMapper.map(keyCode, event.metaState)
+        val handled = if (current.isPicking) handlePickingKey(current, action) else handleComposingKey(current, action)
         if (!handled) return super.onKeyDown(keyCode, event)
         consumedKeyCodes += keyCode
+        return true
+    }
+
+    /** 平常打字：組字區沒字時，空白／退格／Enter／方向鍵都交給系統 */
+    private fun handleComposingKey(current: KeyboardSession, action: HardwareKeyAction): Boolean = when (action) {
+        is HardwareKeyAction.Key -> { current.tapHardwareKey(action.key, action.shifted); true }
+        HardwareKeyAction.Space -> current.hasComposition.also { if (it) current.tapSpace() }
+        HardwareKeyAction.Backspace -> current.hasComposition.also { if (it) current.tapBackspace() }
+        HardwareKeyAction.Enter -> current.hasComposition.also { if (it) current.tapReturn() }
+        HardwareKeyAction.Left -> current.hasComposition.also { if (it) current.moveFocus(-1) }
+        HardwareKeyAction.Right -> current.hasComposition.also { if (it) current.moveFocus(1) }
+        HardwareKeyAction.Down -> current.hasComposition.also { if (it) current.startPicking() }
+        // 組字中 ↑ 不做事，但也不讓輸入框的游標跑掉
+        HardwareKeyAction.Up -> current.hasComposition
+        HardwareKeyAction.Escape, HardwareKeyAction.PassThrough -> false
+    }
+
+    /** 按 ↓ 之後的選字：← → 移動、Enter／空白選定、數字鍵直接選、Esc／↑ 離開；其他鍵先離開選字再照常處理 */
+    private fun handlePickingKey(current: KeyboardSession, action: HardwareKeyAction): Boolean {
+        when (action) {
+            HardwareKeyAction.Left -> current.moveHighlight(-1)
+            HardwareKeyAction.Right, HardwareKeyAction.Down -> current.moveHighlight(1)
+            HardwareKeyAction.Enter, HardwareKeyAction.Space -> current.confirmHighlighted()
+            HardwareKeyAction.Escape, HardwareKeyAction.Up -> current.cancelPicking()
+            is HardwareKeyAction.Key -> {
+                val number = action.key.ascii.digitToIntOrNull()?.takeIf { it in 1..9 && !action.shifted }
+                if (number != null) {
+                    current.pickByNumber(number)
+                } else {
+                    current.cancelPicking()
+                    return handleComposingKey(current, action)
+                }
+            }
+            HardwareKeyAction.Backspace, HardwareKeyAction.PassThrough -> {
+                current.cancelPicking()
+                return handleComposingKey(current, action)
+            }
+        }
         return true
     }
 

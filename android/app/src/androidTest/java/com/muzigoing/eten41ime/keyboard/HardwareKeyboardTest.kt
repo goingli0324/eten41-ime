@@ -10,6 +10,7 @@ import androidx.test.uiautomator.Until
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -70,6 +71,37 @@ class HardwareKeyboardTest {
         press(KeyEvent.KEYCODE_SHIFT_LEFT, KeyEvent.KEYCODE_O, KeyEvent.KEYCODE_K, KeyEvent.KEYCODE_SHIFT_LEFT)
         press(KeyEvent.KEYCODE_D, KeyEvent.KEYCODE_X, KeyEvent.KEYCODE_MINUS, KeyEvent.KEYCODE_SPACE, KeyEvent.KEYCODE_ENTER)
         assertFieldText("ok東")
+    }
+
+    @Test
+    fun arrowKeysMoveFocusAndPickCandidate() {
+        press(KeyEvent.KEYCODE_D, KeyEvent.KEYCODE_X, KeyEvent.KEYCODE_MINUS, KeyEvent.KEYCODE_SPACE,
+            KeyEvent.KEYCODE_C, KeyEvent.KEYCODE_E, KeyEvent.KEYCODE_1)
+        // ← ← ：從最後移到「西」再到「東」
+        press(KeyEvent.KEYCODE_DPAD_LEFT)
+        assertTrue("← 一下要選到「西」", device.wait(Until.hasObject(By.desc("組字區 西").selected(true)), TIMEOUT))
+        press(KeyEvent.KEYCODE_DPAD_LEFT)
+        assertTrue("← 兩下要選到「東」", device.wait(Until.hasObject(By.desc("組字區 東").selected(true)), TIMEOUT))
+        // ↓ 進入選字（第一個候選反白），→ 移到第二個，Enter 選定
+        press(KeyEvent.KEYCODE_DPAD_DOWN, KeyEvent.KEYCODE_DPAD_RIGHT)
+        val picked = device.findObjects(By.selected(true))
+            .mapNotNull { it.contentDescription }
+            .firstOrNull { !it.startsWith("組字區") }
+        assertNotNull("↓ → 之後要有反白的候選字", picked)
+        press(KeyEvent.KEYCODE_ENTER)   // 選定候選
+        press(KeyEvent.KEYCODE_ENTER)   // 送出組字區
+        // 候選可能是單字（換掉「東」）或兩個字的詞（換掉「東西」）
+        assertFieldText(if (picked!!.length >= 2) picked else picked + "西")
+    }
+
+    @Test
+    fun arrowKeysGoToSystemWithoutComposition() {
+        press(KeyEvent.KEYCODE_D, KeyEvent.KEYCODE_X, KeyEvent.KEYCODE_MINUS, KeyEvent.KEYCODE_SPACE, KeyEvent.KEYCODE_ENTER)
+        assertFieldText("東")
+        // 組字區沒字：← 是移動輸入框的游標，接著打的字插在「東」前面
+        press(KeyEvent.KEYCODE_DPAD_LEFT)
+        press(KeyEvent.KEYCODE_C, KeyEvent.KEYCODE_E, KeyEvent.KEYCODE_1, KeyEvent.KEYCODE_ENTER)
+        assertFieldText("西東")
     }
 
     private fun press(vararg keyCodes: Int) {

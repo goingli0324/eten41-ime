@@ -36,6 +36,7 @@ class KeyboardView(
         gravity = Gravity.CENTER_VERTICAL
         setPadding(dp(8), 0, dp(8), 0)
     }
+    private val candidateScroll = HorizontalScrollView(context).apply { isHorizontalScrollBarEnabled = false }
     private val keyArea = LinearLayout(context).apply { orientation = VERTICAL }
     private val bottomRow = LinearLayout(context).apply { orientation = HORIZONTAL }
 
@@ -43,13 +44,8 @@ class KeyboardView(
         orientation = VERTICAL
         setBackgroundColor(palette.background)
         setPadding(dp(3), dp(4), dp(3), dp(6))
-        addView(
-            HorizontalScrollView(context).apply {
-                isHorizontalScrollBarEnabled = false
-                addView(candidateStrip)
-            },
-            LayoutParams(LayoutParams.MATCH_PARENT, dp(CANDIDATE_BAR_DP)),
-        )
+        candidateScroll.addView(candidateStrip)
+        addView(candidateScroll, LayoutParams(LayoutParams.MATCH_PARENT, dp(CANDIDATE_BAR_DP)))
         if (!candidatesOnly) {
             addView(keyArea, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT))
             addView(bottomRow, LayoutParams(LayoutParams.MATCH_PARENT, dp(ROW_DP)).withMargins())
@@ -100,12 +96,39 @@ class KeyboardView(
             candidateStrip.addView(View(context).apply { setBackgroundColor(palette.secondaryText) },
                 LayoutParams(dp(1), dp(22)).apply { setMargins(dp(10), 0, dp(10), 0) })
         }
-        session.candidates.forEach { candidate ->
-            candidateStrip.addView(textItem(candidate.text, 20f).apply {
+        val highlighted = session.highlightedCandidateIndex
+        session.candidates.forEachIndexed { index, candidate ->
+            val isHighlighted = index == highlighted
+            val item = textItem(candidate.text, 20f).apply {
+                // 實體鍵盤選字中：前 9 個候選標上數字，按數字鍵就能選
+                if (highlighted != null && index < 9) text = numberedLabel(index + 1, candidate.text)
                 setPadding(dp(8), dp(4), dp(8), dp(4))
+                background = roundRect(if (isHighlighted) palette.focus else Color.TRANSPARENT)
                 contentDescription = candidate.text
+                isSelected = isHighlighted
                 setOnClickListener { session.choose(candidate) }
-            })
+            }
+            candidateStrip.addView(item)
+            if (isHighlighted) scrollCandidateIntoView(item)
+        }
+        if (highlighted == null) candidateScroll.scrollTo(0, 0)
+    }
+
+    private fun numberedLabel(number: Int, text: String): CharSequence =
+        android.text.SpannableString("$number$text").apply {
+            setSpan(android.text.style.RelativeSizeSpan(0.6f), 0, 1, android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+            setSpan(android.text.style.ForegroundColorSpan(palette.secondaryText), 0, 1, android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+        }
+
+    /** 反白的候選捲到看得到的位置（版面排好之後才知道它在哪） */
+    private fun scrollCandidateIntoView(item: View) {
+        candidateScroll.post {
+            val left = item.left - dp(24)
+            val right = item.right + dp(24) - candidateScroll.width
+            when {
+                candidateScroll.scrollX > left -> candidateScroll.scrollTo(left.coerceAtLeast(0), 0)
+                candidateScroll.scrollX < right -> candidateScroll.scrollTo(right, 0)
+            }
         }
     }
 
