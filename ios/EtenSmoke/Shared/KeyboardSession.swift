@@ -16,8 +16,11 @@ final class KeyboardSession: ObservableObject {
     @Published private(set) var focusedIndex: Int?
     @Published private(set) var candidates: [ChewingCandidate] = []
     @Published private(set) var isEnglishMode = false
-    /// ⇧ 只作用在下一個鍵（單次）
-    @Published private(set) var isShifted = false
+    /// ⇧ 三段循環：按一下只作用在下一個鍵，再按一下鎖定，第三下解除
+    enum ShiftState { case off, once, locked }
+    @Published private(set) var shiftState = ShiftState.off
+    var isShifted: Bool { shiftState != .off }
+    var isShiftLocked: Bool { shiftState == .locked }
     @Published private(set) var isShowingSymbols = false
 
     var composingText: String { composingCharacters.joined() + pendingBopomofo }
@@ -36,7 +39,7 @@ final class KeyboardSession: ObservableObject {
 
     func tap(_ key: Eten41Key) {
         let shifted = isShifted
-        isShifted = false
+        if shiftState == .once { shiftState = .off }
         if isEnglishMode {
             output?.insertText(shifted ? key.englishShiftedText : String(key.ascii))
             return
@@ -48,12 +51,16 @@ final class KeyboardSession: ObservableObject {
     }
 
     func toggleShift() {
-        isShifted.toggle()
+        switch shiftState {
+        case .off: shiftState = .once
+        case .once: shiftState = .locked
+        case .locked: shiftState = .off
+        }
     }
 
     func toggleSymbols() {
         isShowingSymbols.toggle()
-        isShifted = false
+        shiftState = .off
     }
 
     /// 符號面板：先把組字區上字，再插入標點，然後回到注音鍵

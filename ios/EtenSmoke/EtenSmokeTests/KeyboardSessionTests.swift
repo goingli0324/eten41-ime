@@ -155,6 +155,30 @@ final class KeyboardSessionTests: XCTestCase {
         XCTAssertEqual(session.composingText, "，ㄓ", "第二次 , 要回到 ㄓ")
     }
 
+    func testSecondShiftTapLocksUntilThirdTap() {
+        session.toggleShift()
+        session.toggleShift()
+        XCTAssertTrue(session.isShiftLocked)
+        session.tap(key(","))
+        session.tap(key("."))
+        XCTAssertEqual(session.composingText, "，。", "鎖定時每個符號鍵都是全形標點")
+        XCTAssertTrue(session.isShifted)
+        session.toggleShift()
+        XCTAssertFalse(session.isShifted)
+        XCTAssertFalse(session.isShiftLocked)
+        session.tap(key(","))
+        XCTAssertEqual(session.composingText, "，。ㄓ")
+    }
+
+    func testShiftLockTypesUppercaseInEnglishMode() {
+        session.toggleEnglishMode()
+        session.toggleShift()
+        session.toggleShift()
+        session.tap(key("o"))
+        session.tap(key("k"))
+        XCTAssertEqual(output.text, "OK")
+    }
+
     func testShiftDoesNotChangeLettersInChineseMode() {
         session.toggleShift()
         session.tap(key("d"))

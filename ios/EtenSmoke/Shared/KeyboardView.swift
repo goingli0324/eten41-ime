@@ -18,6 +18,8 @@ struct KeyboardView: View {
     /// 鍵盤擴充在需要時才顯示地球鍵（iPhone 有實體 Home 鍵或系統要求時）
     var showsGlobeKey = false
     var onGlobe: () -> Void = {}
+    /// 按住刪除鍵的連續刪除；用 @State 才不會在畫面重畫時被換掉
+    @State private var backspaceRepeater = KeyRepeater()
 
     static let keySpacing: CGFloat = 4
     static let rowHeight: CGFloat = 46
@@ -168,9 +170,24 @@ struct KeyboardView: View {
         }
     }
 
+    /// 刪除鍵：按下立刻刪一個，按住 0.4 秒後每 0.1 秒連續刪，放開就停
     private func backspaceKey(width: CGFloat) -> some View {
-        functionKey(systemImage: "delete.left", label: "刪除", id: "backspaceKey",
-                    width: width, action: session.tapBackspace)
+        Image(systemName: "delete.left")
+            .frame(width: width, height: Self.rowHeight)
+            .background(Color(uiColor: .systemGray3), in: RoundedRectangle(cornerRadius: 5))
+            .foregroundStyle(.primary)
+            .contentShape(Rectangle())
+            .gesture(
+                DragGesture(minimumDistance: 0)
+                    .onChanged { _ in backspaceRepeater.start(session.tapBackspace) }
+                    .onEnded { _ in backspaceRepeater.stop() }
+            )
+            .onDisappear { backspaceRepeater.stop() }
+            .accessibilityElement()
+            .accessibilityIdentifier("backspaceKey")
+            .accessibilityLabel("刪除")
+            .accessibilityAddTraits(.isButton)
+            .accessibilityAction { session.tapBackspace() }
     }
 
     private func functionKey(systemImage: String? = nil, title: String? = nil, label: String, id: String,
@@ -202,7 +219,8 @@ struct KeyboardView: View {
         return HStack(spacing: Self.keySpacing) {
             functionKey(title: session.isEnglishMode ? "英" : "中", label: "中英切換", id: "modeKey",
                         width: sideWidth, action: session.toggleEnglishMode)
-            functionKey(systemImage: session.isShifted ? "shift.fill" : "shift", label: "Shift", id: "shiftKey",
+            functionKey(systemImage: session.isShiftLocked ? "capslock.fill" : (session.isShifted ? "shift.fill" : "shift"),
+                        label: session.isShiftLocked ? "Shift 鎖定" : "Shift", id: "shiftKey",
                         width: sideWidth, isActive: session.isShifted, action: session.toggleShift)
             functionKey(title: session.isShowingSymbols ? "返回" : "符", label: "標點符號", id: "symbolKey",
                         width: sideWidth, isActive: session.isShowingSymbols, action: session.toggleSymbols)
@@ -215,5 +233,31 @@ struct KeyboardView: View {
             functionKey(systemImage: "return", label: "換行", id: "returnKey",
                         width: sideWidth, action: session.tapReturn)
         }
+    }
+}
+
+/// 按住一個鍵時重複執行動作：第一次立刻做，停 0.4 秒後每 0.1 秒做一次
+final class KeyRepeater {
+    static let initialDelay: TimeInterval = 0.4
+    static let interval: TimeInterval = 0.1
+    private var timer: Timer?
+    private var isPressed = false
+
+    /// 手指按著時 DragGesture 會一直回報，只有第一次要開始
+    func start(_ action: @escaping () -> Void) {
+        guard !isPressed else { return }
+        isPressed = true
+        action()
+        timer = Timer.scheduledTimer(withTimeInterval: Self.initialDelay, repeats: false) { [weak self] _ in
+            guard let self, self.isPressed else { return }
+            action()
+            self.timer = Timer.scheduledTimer(withTimeInterval: Self.interval, repeats: true) { _ in action() }
+        }
+    }
+
+    func stop() {
+        isPressed = false
+        timer?.invalidate()
+        timer = nil
     }
 }

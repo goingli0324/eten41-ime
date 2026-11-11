@@ -46,6 +46,7 @@ class ImeEndToEndTest {
         val field = device.wait(Until.findObject(By.desc("試打欄")), TIMEOUT)
         assertNotNull("找不到試打欄", field)
         field.click()
+        ensureEten41KeyboardShown(device, IME_ID)
 
         tapAll("D", "X", "-", "空白", "C", "E", "1")
         tap("組字區 東")
@@ -59,6 +60,40 @@ class ImeEndToEndTest {
         tap("標點符號")
         tap("、")
         assertFieldText("冬西，、")
+    }
+
+    /** 按住刪除鍵連續刪：先刪光組字區（鍵盤每刪一次就重畫），再刪輸入框裡的字；放開後要停 */
+    @Test
+    fun holdingBackspaceRepeatsUntilReleased() {
+        val context = instrumentation.targetContext
+        context.startActivity(
+            context.packageManager.getLaunchIntentForPackage(context.packageName)!!
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK),
+        )
+        val field = device.wait(Until.findObject(By.desc("試打欄")), TIMEOUT)
+        assertNotNull("找不到試打欄", field)
+        field.click()
+        ensureEten41KeyboardShown(device, IME_ID)
+
+        // 輸入框 3 個字＋組字區 3 個字
+        tapAll("D", "X", "-", "空白", "C", "E", "1", "D", "X", "-", "空白", "換行")
+        assertFieldText("東西東")
+        tapAll("C", "E", "1", "D", "X", "-", "空白", "C", "E", "1")
+        assertNotNull(device.wait(Until.findObject(By.desc("組字區 西")), TIMEOUT))
+
+        val backspace = device.wait(Until.findObject(By.desc("刪除")), TIMEOUT)
+        assertNotNull("找不到刪除鍵", backspace)
+        val center = backspace.visibleCenter
+        // 同一點「滑動」＝按住；400 步約 2 秒，夠刪掉組字區 3 個字和輸入框 3 個字
+        device.swipe(center.x, center.y, center.x, center.y, 400)
+        // 輸入框刪到空時，無障礙讀到的是提示文字
+        assertFieldText("點這裡用41注音打字")
+        assertEquals("組字區要刪光", null, device.findObject(By.descStartsWith("組字區")))
+
+        // 放開後不能繼續刪：再打一個字，等超過連續刪除的間隔，字要還在
+        tapAll("D", "X", "-", "空白", "換行")
+        Thread.sleep(600)
+        assertFieldText("東")
     }
 
     /**
@@ -80,6 +115,7 @@ class ImeEndToEndTest {
         shot("store-4-home.png")
 
         field.click()
+        ensureEten41KeyboardShown(device, IME_ID)
         tapAll(",", "X", "-", "空白", "X", "9", "2", "換行")
         tapAll(",", "X", "4", "E", "9", "空白", "/", "X", "空白", "J", "X", "4", "F", "A", "3")
         assertNotNull("組字區沒有「注音輸入法」", device.wait(Until.findObject(By.desc("組字區 法")), TIMEOUT))

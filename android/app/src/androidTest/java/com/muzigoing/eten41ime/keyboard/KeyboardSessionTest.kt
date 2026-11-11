@@ -49,6 +49,41 @@ class KeyboardSessionTest {
     private fun type(keys: String) = keys.forEach { if (it == ' ') session.tapSpace() else session.tap(key(it)) }
 
     @Test
+    fun secondShiftTapLocksUntilThirdTap() {
+        session.toggleShift()
+        session.toggleShift()
+        assertTrue(session.isShiftLocked)
+        session.tap(key(','))
+        session.tap(key('.'))
+        assertEquals("鎖定時每個符號鍵都是全形標點", "，。", session.composingText)
+        assertTrue(session.isShifted)
+        session.toggleShift()
+        assertFalse(session.isShifted)
+        assertFalse(session.isShiftLocked)
+        session.tap(key(','))
+        assertEquals("，。ㄓ", session.composingText)
+    }
+
+    @Test
+    fun shiftLockTypesUppercaseInEnglishMode() {
+        session.toggleEnglishMode()
+        session.toggleShift()
+        session.toggleShift()
+        session.tap(key('o'))
+        session.tap(key('k'))
+        assertEquals("OK", output.text)
+    }
+
+    @Test
+    fun hardwareKeyDoesNotDisturbShiftLock() {
+        session.toggleShift()
+        session.toggleShift()
+        session.tapHardwareKey(key('d'), shifted = false)
+        assertTrue("實體鍵不該解除螢幕鍵盤的鎖定", session.isShiftLocked)
+        assertEquals("ㄉ", session.composingText)
+    }
+
+    @Test
     fun hardwareShiftLetterTypesUppercaseAfterCommitting() {
         type("dx- ")
         session.tapHardwareKey(key('o'), shifted = true)

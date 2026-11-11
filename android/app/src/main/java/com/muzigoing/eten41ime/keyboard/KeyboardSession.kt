@@ -20,8 +20,11 @@ class KeyboardSession(private val engine: ChewingEngine, private var output: Key
     var focusedIndex: Int? = null; private set
     var candidates: List<ChewingCandidate> = emptyList(); private set
     var isEnglishMode = false; private set
-    /** ⇧ 只作用在下一個鍵 */
-    var isShifted = false; private set
+    /** ⇧ 三段循環：按一下只作用在下一個鍵，再按一下鎖定，第三下解除 */
+    enum class ShiftState { OFF, ONCE, LOCKED }
+    var shiftState = ShiftState.OFF; private set
+    val isShifted: Boolean get() = shiftState != ShiftState.OFF
+    val isShiftLocked: Boolean get() = shiftState == ShiftState.LOCKED
     var isShowingSymbols = false; private set
 
     /** 狀態變了就通知畫面重畫 */
@@ -35,7 +38,11 @@ class KeyboardSession(private val engine: ChewingEngine, private var output: Key
 
     fun tap(key: Eten41Key) {
         val shifted = isShifted
-        isShifted = false
+        if (shiftState == ShiftState.ONCE) shiftState = ShiftState.OFF
+        type(key, shifted)
+    }
+
+    private fun type(key: Eten41Key, shifted: Boolean) {
         if (isEnglishMode) {
             output?.insertText(if (shifted) key.englishShiftedText else key.ascii.toString())
             notifyChanged()
@@ -61,18 +68,22 @@ class KeyboardSession(private val engine: ChewingEngine, private var output: Key
             notifyChanged()
             return
         }
-        isShifted = shifted
-        tap(key)
+        // 實體鍵盤自己有 Shift，不動螢幕鍵盤的 ⇧ 狀態
+        type(key, shifted)
     }
 
     fun toggleShift() {
-        isShifted = !isShifted
+        shiftState = when (shiftState) {
+            ShiftState.OFF -> ShiftState.ONCE
+            ShiftState.ONCE -> ShiftState.LOCKED
+            ShiftState.LOCKED -> ShiftState.OFF
+        }
         notifyChanged()
     }
 
     fun toggleSymbols() {
         isShowingSymbols = !isShowingSymbols
-        isShifted = false
+        shiftState = ShiftState.OFF
         notifyChanged()
     }
 
@@ -148,7 +159,7 @@ class KeyboardSession(private val engine: ChewingEngine, private var output: Key
     fun reset() {
         engine.clear()
         focusedIndex = null
-        isShifted = false
+        shiftState = ShiftState.OFF
         isShowingSymbols = false
         refresh()
     }

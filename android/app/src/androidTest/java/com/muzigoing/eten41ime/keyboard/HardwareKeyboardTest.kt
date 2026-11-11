@@ -36,6 +36,7 @@ class HardwareKeyboardTest {
         val field = device.wait(Until.findObject(By.desc("試打欄")), TIMEOUT)
         assertNotNull("找不到試打欄", field)
         field.click()
+        ensureEten41KeyboardShown(device, IME_ID)
         device.waitForIdle()
     }
 

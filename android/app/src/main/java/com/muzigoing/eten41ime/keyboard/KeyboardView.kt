@@ -7,7 +7,10 @@ import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
 import android.graphics.drawable.StateListDrawable
 import android.util.TypedValue
+import android.os.Handler
+import android.os.Looper
 import android.view.Gravity
+import android.view.MotionEvent
 import android.view.View
 import android.widget.HorizontalScrollView
 import android.widget.LinearLayout
@@ -114,7 +117,7 @@ class KeyboardView(
             val units = row.size + if (isLast) 1.5f else 0f
             keyArea.addView(keyRow(units) {
                 row.forEach { key -> addView(characterKey(key), keyParams(1f)) }
-                if (isLast) addView(functionKey("⌫", "刪除", session::tapBackspace), keyParams(1.5f))
+                if (isLast) addView(backspaceKey(), keyParams(1.5f))
             }, rowParams())
         }
     }
@@ -131,7 +134,7 @@ class KeyboardView(
         }
         keyArea.addView(keyRow(12f) {
             addView(Space(context), keyParams(10.5f))
-            addView(functionKey("⌫", "刪除", session::tapBackspace), keyParams(1.5f))
+            addView(backspaceKey(), keyParams(1.5f))
         }, rowParams())
     }
 
@@ -165,7 +168,9 @@ class KeyboardView(
         bottomRow.removeAllViews()
         bottomRow.weightSum = 0f
         bottomRow.addView(functionKey(if (session.isEnglishMode) "英" else "中", "中英切換", session::toggleEnglishMode), keyParams(1.5f))
-        bottomRow.addView(functionKey(if (session.isShifted) "⬆" else "⇧", "Shift", session::toggleShift, active = session.isShifted), keyParams(1.5f))
+        val shiftLabel = if (session.isShiftLocked) "⇪" else if (session.isShifted) "⬆" else "⇧"
+        val shiftDescription = if (session.isShiftLocked) "Shift 鎖定" else "Shift"
+        bottomRow.addView(functionKey(shiftLabel, shiftDescription, session::toggleShift, active = session.isShifted), keyParams(1.5f))
         bottomRow.addView(functionKey(if (session.isShowingSymbols) "返回" else "符", "標點符號", session::toggleSymbols, active = session.isShowingSymbols), keyParams(1.5f))
         if (showsGlobeKey) bottomRow.addView(functionKey("🌐", "下一個鍵盤", onGlobe), keyParams(1.5f))
         bottomRow.addView(functionKey(if (session.isEnglishMode) "space" else "一聲／空白", "空白", session::tapSpace), keyParams(5f))
@@ -181,6 +186,45 @@ class KeyboardView(
             contentDescription = description
             setOnClickListener { onTap() }
         }
+
+    /**
+     * 刪除鍵：按下立刻刪一個，按住 0.4 秒後每 0.1 秒連續刪。
+     * 刪組字區時整個鍵盤會重畫、這顆鍵會被換掉，所以「放開」由最外層的 dispatchTouchEvent 判斷，不靠這顆鍵自己。
+     */
+    @android.annotation.SuppressLint("ClickableViewAccessibility")
+    private fun backspaceKey(): TextView =
+        functionKey("⌫", "刪除", session::tapBackspace).apply {
+            setOnTouchListener { _, event ->
+                if (event.actionMasked == MotionEvent.ACTION_DOWN) startBackspaceRepeat()
+                true  // 點擊由上面處理；onClick 只留給 TalkBack 等無障礙操作
+            }
+        }
+
+    private val repeatHandler = Handler(Looper.getMainLooper())
+    private val repeatBackspace = object : Runnable {
+        override fun run() {
+            session.tapBackspace()
+            repeatHandler.postDelayed(this, REPEAT_INTERVAL_MS)
+        }
+    }
+
+    private fun startBackspaceRepeat() {
+        stopBackspaceRepeat()
+        session.tapBackspace()
+        repeatHandler.postDelayed(repeatBackspace, REPEAT_INITIAL_DELAY_MS)
+    }
+
+    private fun stopBackspaceRepeat() = repeatHandler.removeCallbacks(repeatBackspace)
+
+    override fun dispatchTouchEvent(event: MotionEvent): Boolean {
+        if (event.actionMasked == MotionEvent.ACTION_UP || event.actionMasked == MotionEvent.ACTION_CANCEL) stopBackspaceRepeat()
+        return super.dispatchTouchEvent(event)
+    }
+
+    override fun onDetachedFromWindow() {
+        stopBackspaceRepeat()
+        super.onDetachedFromWindow()
+    }
 
     private fun functionKey(label: String, description: String, onTap: () -> Unit, active: Boolean = false): TextView =
         keycap(label, description, if (active) palette.key else palette.functionKey, 15f, onTap).apply { isSelected = active }
@@ -233,6 +277,8 @@ class KeyboardView(
 
     companion object {
         const val ROW_DP = 48
+        const val REPEAT_INITIAL_DELAY_MS = 400L
+        const val REPEAT_INTERVAL_MS = 100L
         const val CANDIDATE_BAR_DP = 44
     }
 }

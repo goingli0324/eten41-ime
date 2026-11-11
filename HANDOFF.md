@@ -127,7 +127,7 @@ iOS TestFlight（2026-11-11）：App Store Connect App ID 6833066181；1.0 (1) �
 - 已加：兩個 PrivacyInfo.xcprivacy（File timestamp C617.1，libchewing 的 stat 系列）、ITSAppUsesNonExemptEncryption=NO、版本 1.0
 - 內部測試群組「自己測試」（自動分發開啟）；2026-11-11 使用者從 TestFlight 安裝 1.0 (1) 實機試用正常
 - 外部測試群組「主管測試」（1 人，名單只在 ASC）：1.0 (1) 2026-11-11 送 Beta 審查，狀態「等待審查」；TestFlight 測試資訊已填（審查聯絡人同紫垣）
-- 下次上傳要把 CURRENT_PROJECT_VERSION 加 1
+- 下次上傳要把 CURRENT_PROJECT_VERSION 加 1（目前 2）
 - 正式送審前：ASC 要求先填歐盟「貿易商狀態」（DSA）
 
 Android 內部測試（2026-11-11）：Play Console 已建 App（套件 app.muzigoing.eten41），內部測試 1 (1.0) 已發布，測試名單 eten41-testers（2 人，名單內容只在 Play Console，不寫進 repo）；加入連結 https://play.google.com/apps/internaltest/4700878220930203526
@@ -137,7 +137,10 @@ Android 內部測試（2026-11-11）：Play Console 已建 App（套件 app.muzi
 - 實體（藍牙）鍵盤支援（2026-11-11，Android 1.0 (2)）：HardwareKeyMapper 照美式鍵位轉倚天41；單按 Shift 切中英、Shift＋字母打大寫、Shift＋符號打全形；組字區沒字時空白／退格／Enter 交給系統；Ctrl／Alt／Meta 組合鍵交給系統；接實體鍵盤時只顯示候選列（模擬器 hw.keyboard=no，這個模式未實機驗）；選字只能點候選列（數字鍵是注音）
 - iOS 不支援實體鍵盤：第三方鍵盤收不到實體按鍵（開發者論壇回報，非官方文件），使用者確認 Apple 內建注音沒有倚天排列
 - 坑：測試 `ime set` 後系統不一定已切換，偶發叫出 Gboard → ImeTestSupport.waitUntilEten41IsDefault
-- 下次上傳 versionCode 要加 1（目前 2）
+- 長按刪除與大寫鎖定（2026-11-11，iOS 1.0 (2)／Android 1.0 (3)）：刪除鍵按下即刪、按住 0.4 秒後每 0.1 秒連刪；⇧ 三段循環（單次→鎖定→解除），實體鍵盤不動螢幕 ⇧ 狀態
+  - Android 坑：刪組字區會重畫整個鍵盤、刪除鍵被換掉，「放開」改由 KeyboardView.dispatchTouchEvent 判斷
+  - 測試坑：上一個測試的 `ime reset` 可能比下一個測試的 `ime set` 晚生效，設定值看起來對、出來的卻是 Gboard → ensureEten41KeyboardShown；iOS UI 測試別比對特定字（鍵盤擴充會記住選過的字）
+- 下次上傳 versionCode 要加 1（目前 3）
 
 上架路線剩下：圖示／截圖／商店文字、Android 正式簽署金鑰、送審（iOS TestFlight→App Store；Android 內部測試→正式）。
 

@@ -64,6 +64,39 @@ final class KeyboardExtensionUITests: XCTestCase {
         snapshot(app, "extension-candidates")
     }
 
+    /// 按住刪除鍵連續刪：先刪光組字區，再刪輸入框裡的字；放開後要停
+    func testHoldingBackspaceRepeatsUntilReleased() throws {
+        try addEten41KeyboardInSettings()
+        let app = XCUIApplication()
+        app.launch()
+        let field = app.textFields["typedKeysField"]
+        XCTAssertTrue(field.waitForExistence(timeout: 10))
+        field.tap()
+        try switchToEten41Keyboard(in: app, until: app.buttons["key-d"])
+
+        typeKeys("dx- ce1dx- ", in: app)
+        app.buttons["returnKey"].tap()
+        // 只比字數：鍵盤擴充會記住別的測試選過的字（東可能變成冬）
+        XCTAssertEqual((field.value as? String)?.count, 3)
+        typeKeys("ce1dx- ce1", in: app)
+        XCTAssertTrue(app.buttons["composing-2"].waitForExistence(timeout: 3))
+
+        let backspace = app.buttons["backspaceKey"]
+        XCTAssertTrue(backspace.waitForExistence(timeout: 3), "找不到刪除鍵")
+        backspace.press(forDuration: 2.5)
+        XCTAssertFalse(app.buttons["composing-0"].exists, "組字區要刪光")
+        // 空的輸入框，value 是提示文字
+        XCTAssertEqual(field.value as? String, "點這裡打字")
+
+        typeKeys("dx- ", in: app)
+        app.buttons["returnKey"].tap()
+        Thread.sleep(forTimeInterval: 0.6)
+        XCTAssertEqual((field.value as? String)?.count, 1, "放開後不能繼續刪")
+
+        backspace.tap()
+        XCTAssertEqual(field.value as? String, "點這裡打字", "點一下只刪一個字")
+    }
+
     /// 商店截圖用：平常跳過；要拍時 xcodebuild 加環境變數 TEST_RUNNER_STORE_SCREENSHOTS=1，
     /// 再用 xcresulttool 匯出名稱 store-* 的附件（用 XCUIScreen 拍，才會含鍵盤擴充）。
     func testStoreScreenshots() throws {
