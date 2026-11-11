@@ -132,6 +132,8 @@ iOS TestFlight（2026-11-11）：App Store Connect App ID 6833066181；1.0 (1) �
 
 Android 內部測試（2026-11-11）：Play Console 已建 App（套件 app.muzigoing.eten41），內部測試 1 (1.0) 已發布，測試名單 eten41-testers（2 人，名單內容只在 Play Console，不寫進 repo）；加入連結 https://play.google.com/apps/internaltest/4700878220930203526
 - 版本 versionName 改 1.0；Play 只警告沒附去模糊化檔（沒開 R8，可忽略）
+- 2026-11-11 使用者在 Android 實機從 Play 內部測試安裝 1.0 試用正常
+- 坑：Play 內部測試不會寄邀請信，要把加入連結傳給測試人員；在 Play 商店 App 直接開連結、或裝置登入的帳號不在名單，會顯示「找不到項目」→ 用瀏覽器開、登入名單帳號按「接受邀請」
 - 下次上傳 versionCode 要加 1
 
 上架路線剩下：圖示／截圖／商店文字、Android 正式簽署金鑰、送審（iOS TestFlight→App Store；Android 內部測試→正式）。
