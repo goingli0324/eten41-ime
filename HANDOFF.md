@@ -125,8 +125,14 @@ iOS TestFlight（2026-11-11）：App Store Connect App ID 6833066181；1.0 (1) �
 - 坑：之前只用萬用描述檔，套件 ID 沒正式註冊，ASC 建 App 時下拉選單是空的 → 先 exportArchive（destination export）讓 Xcode 自動註冊 App 與鍵盤 ID
 - 坑：支援 iPad 必須宣告 UISupportedInterfaceOrientations，否則上傳被退（Invalid bundle）
 - 已加：兩個 PrivacyInfo.xcprivacy（File timestamp C617.1，libchewing 的 stat 系列）、ITSAppUsesNonExemptEncryption=NO、版本 1.0
+- 內部測試群組「自己測試」（自動分發開啟）；2026-11-11 使用者從 TestFlight 安裝 1.0 (1) 實機試用正常
+- 外部測試群組「主管測試」（1 人，名單只在 ASC）：1.0 (1) 2026-11-11 送 Beta 審查，狀態「等待審查」；TestFlight 測試資訊已填（審查聯絡人同紫垣）
 - 下次上傳要把 CURRENT_PROJECT_VERSION 加 1
 - 正式送審前：ASC 要求先填歐盟「貿易商狀態」（DSA）
+
+Android 內部測試（2026-11-11）：Play Console 已建 App（套件 app.muzigoing.eten41），內部測試 1 (1.0) 已發布，測試名單 eten41-testers（2 人，名單內容只在 Play Console，不寫進 repo）；加入連結 https://play.google.com/apps/internaltest/4700878220930203526
+- 版本 versionName 改 1.0；Play 只警告沒附去模糊化檔（沒開 R8，可忽略）
+- 下次上傳 versionCode 要加 1
 
 上架路線剩下：圖示／截圖／商店文字、Android 正式簽署金鑰、送審（iOS TestFlight→App Store；Android 內部測試→正式）。
 
